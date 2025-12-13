@@ -1,4 +1,6 @@
 const canvas = document.getElementById("gameCanvas")
+let bulbasCanvasOldTimestamp
+let bulbasCanvasDelta
 const ctx = canvas.getContext("2d")
 var imagesBuffer = []
 var settings
@@ -182,4 +184,10 @@ function text(ctx, text, x, y, font, align, color, outlineColor, outlineSize) {
 
     if (outlineColor) ctx.strokeText(text, x, y)
     if (color) ctx.fillText(text, x, y)
+}
+
+function getDelta(timestamp){
+    bulbasCanvasDelta = (timestamp - bulbasCanvasOldTimestamp)
+    bulbasCanvasOldTimestamp = timestamp
+    return bulbasCanvasDelta
 }
