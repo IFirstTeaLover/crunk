@@ -175,7 +175,7 @@ function numberTo2DGrid(number, rows, columns, debug) {
     return { "x": thisX, "y": thisY }
 }
 
-function text(ctx, text, x, y, font, align, color, outlineColor, outlineSize) {
+function ctext(ctx, text, x, y, font, align, color, outlineColor, outlineSize) {
     ctx.font = font
     ctx.textAlign = align
     ctx.fillStyle = color

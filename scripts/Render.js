@@ -9,11 +9,15 @@ canvas.height = rheight
 
 const UI = document.getElementById("UIStatic")
 const UICtx = UI.getContext("2d")
+
+const UIOverlay = document.getElementById("UIStaticOverlay")
+const UIOCtx = UIOverlay.getContext("2d")
 let DEBUG = false
 let currentMousePos = [0, 0]
 let topMenuHeight = rheight / 10
 let bottomMenuHeight = rheight / 10
 let pad = getPrefferedAxis() / Math.pow(80, 1);
+if (pad > 10) pad = 10
 let delta
 let fps = 60
 let lastTimestamp = Date.now()
@@ -21,20 +25,21 @@ let currentScene = "bars"
 let additiveAnimationScene
 let cameraOffset = 0
 let buttons = []
-if (pad > 10) pad = 10
+
 addBufferImage("images/upgrades/faster_health.png")
-rebuildUI()
+
 requestAnimationFrame(render)
+rebuildUI()
 function render(timestamp) {
     delta = getDelta(timestamp)
     fps = Math.round(1000 / delta)
     lastTimestamp = timestamp
     ctx.drawImage(UI, 0, 0)
-    text(ctx, "HP: " + HP, (rwidth - pad) / 4, topMenuHeight / 2 + 10, prefferedAxis / 50 + "px rubik", "center", "white", "orange", 2)
-    text(ctx, "Attack: " + attack, (rwidth * 2 - pad) / 2 - (rwidth - pad) / 4, topMenuHeight / 2 + 10, prefferedAxis / 50 + "px rubik", "center", "white", "cyan", 2)
+    ctext(ctx, "HP: " + HP, (rwidth - pad) / 4, topMenuHeight / 2 + 10, prefferedAxis / 50 + "px rubik", "center", "white", "orange", 2)
+    ctext(ctx, "Attack: " + attack, (rwidth * 2 - pad) / 2 - (rwidth - pad) / 4, topMenuHeight / 2 + 10, prefferedAxis / 50 + "px rubik", "center", "white", "cyan", 2)
 
     if (currentScene == "bars" || additiveAnimationScene == "bars") drawBars()
-    text(ctx, "FPS: " + fps, rwidth - 10, rheight - 15 - bottomMenuHeight, "32px rubik", "right", "white", null, 0)
+    ctext(ctx, "FPS: " + fps, rwidth - 10, rheight - 15 - bottomMenuHeight, "32px rubik", "right", "white", null, 0)
     drawDebug()
 
     for (let i = 0; i < progresses.length; i++) {
@@ -51,10 +56,9 @@ function render(timestamp) {
             if (i == 1) attack += Math.ceil((levels[1] * (levels[1] * levels[1] / 200)))
         }
     }
-    rect(ctx, pad, 200, rwidth - pad*2, rheight / 7.5, "#212224ff", "#313437ff", 5, 10, false)
-    drawImageFromBuffer(ctx, 0, pad * 2,200 + pad ,(rheight / 7.5-pad*2) * 1.2,rheight / 7.5 - 2-pad*2)
-    text(ctx, "Faster health bar", pad*2 +(rheight / 7.5-pad*2) * 1.2 + rwidth/100, 200 + (rheight / 7.5)/2.2, prefferedAxis/40+"px rubik", "left", "#dc5530ff", "#ffffffff")
-    text(ctx, "Price: " + upgradePrices[0] + "🪙", pad*2 +(rheight / 7.5-pad*2) * 1.2 + rwidth/100, 200 + (rheight / 7.5)/1.2, prefferedAxis/60+"px rubik", "left", "#46c938ff", "#ffffffff")
+    if (currentScene == "shop" || additiveAnimationScene == "shop"){
+        ctx.drawImage(UIOverlay, rwidth-cameraOffset, 0)
+    }
     requestAnimationFrame(render)
 }
 
@@ -68,8 +72,17 @@ function bar(x, y, color, outlineColor, id, pad, name) {
         if (outline > 5) outline = 5
     }
     rect(ctx, x + 5, y + 5, (rwidth / 2 - pad * 2) * progresses[id], rheight / 10 - 12, color, outlineColor, outline, 7, false)
-    text(ctx, name, x + (rwidth / 2 - pad * 1.5 - 2.5) / 2, y + (rheight / 10) / 1.5, prefferedAxis / 50 + "px rubik", "center", outlineColor, "white", prefferedAxis / 300)
+    ctext(ctx, name, x + (rwidth / 2 - pad * 1.5 - 2.5) / 2, y + (rheight / 10) / 1.5, prefferedAxis / 50 + "px rubik", "center", outlineColor, "white", prefferedAxis / 300)
     ctx.restore()
+}
+
+function shop(y, image, text, id) {
+    rect(UIOCtx, pad, pad + topMenuHeight + y, rwidth - pad * 2, rheight / 7.5, "#212224ff", "#313437ff", 5, 10, false)
+    drawImageFromBuffer(UIOCtx, image, pad * 2, pad * 2 + topMenuHeight + y, (rheight / 7.5 - pad * 2) * 1.2, rheight / 7.5 - 2 - pad * 2)
+    ctext(UIOCtx, text, pad * 2 + (rheight / 7.5 - pad * 2) * 1.2 + rwidth / 100 + y, pad + topMenuHeight + (rheight / 7.5) / 2.2, prefferedAxis / 40 + "px rubik", "left", "#dc5530ff", "#ffffffff")
+    ctext(UIOCtx, "Price: " + upgradePrices[id] + "🪙", pad * 2 + (rheight / 7.5 - pad * 2) * 1.2 + rwidth / 100 + y, pad + topMenuHeight + (rheight / 7.5) / 1.2, prefferedAxis / 60 + "px rubik", "left", "#46c938ff", "#ffffffff")
+    ctext(UIOCtx, "Level " + upgradeLevels[id], rwidth - pad * 2, pad + topMenuHeight + (rheight / 7.5) / 1.2, prefferedAxis / 60 + "px rubik", "right", "#46c938ff", "#ffffffff")
+    buttons.push({ x: pad, y: pad + topMenuHeight + y, xs: rwidth - pad * 2, ys: rheight / 7.5 })
 }
 
 canvas.addEventListener("mousemove", (e) => {
@@ -105,7 +118,11 @@ function drawDebug() {
 function rebuildUI() {
     UI.width = rwidth
     UI.height = rheight
+    UIOverlay.width = rwidth
+    UIOverlay.height = rheight
     topMenuHeight = rheight / 10
+    pad = getPrefferedAxis() / Math.pow(80, 1);
+    if (pad > 10) pad = 10
     rect(UICtx, 0, 0, rwidth, rheight, "#151519ff", null, null, 0, false)
 
     rect(UICtx, 0, 0, rwidth, topMenuHeight, "#212128ff", null, null, 0, false)
@@ -121,6 +138,7 @@ function rebuildUI() {
     // rect(UICtx, (rheight / 75) * 15, rheight - bottomMenuHeight + rheight / 75, bottomMenuHeight - rheight / 37.5, bottomMenuHeight - rheight / 37.5, "#1b1b1fff", "#3c3c42ff", 5, 7, false)
     // rect(UICtx, (rheight / 75) * 22, rheight - bottomMenuHeight + rheight / 75, bottomMenuHeight - rheight / 37.5, bottomMenuHeight - rheight / 37.5, "#1b1b1fff", "#3c3c42ff", 5, 7, false)
     // rect(UICtx, (rheight / 75) * 29, rheight - bottomMenuHeight + rheight / 75, bottomMenuHeight - rheight / 37.5, bottomMenuHeight - rheight / 37.5, "#1b1b1fff", "#3c3c42ff", 5, 7, false)
+    shop(0, 0, "Faster health bar", 0)
 }
 
 function drawBars() {
