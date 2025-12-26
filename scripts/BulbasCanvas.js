@@ -4,7 +4,7 @@ let bulbasCanvasDelta
 const ctx = canvas.getContext("2d")
 var imagesBuffer = []
 var settings
-function rect(ctx,x, y, w, h, fillColor, strokeColor, strokeSize, round, centered) {
+function rect(ctx, x, y, w, h, fillColor, strokeColor, strokeSize, round, centered) {
     ctx.beginPath()
     ctx.strokeStyle = strokeColor
     ctx.fillStyle = fillColor
@@ -45,7 +45,7 @@ function circle(ctx, x, y, r, fillColor, strokeColor, strokeSize, arc) {
     ctx.closePath()
 }
 
-function image(ctx,imageSource, x, y) {
+function image(ctx, imageSource, x, y) {
     let thisImage = null
     for (const img of imagesBuffer) {
         if (img.src === new URL(imageSource, window.location.href).href) {
@@ -63,7 +63,7 @@ function image(ctx,imageSource, x, y) {
     ctx.drawImage(thisImage, x - thisImage.width / 2, y - thisImage.height / 2)
 }
 
-function addBufferImage(source) {
+async function addBufferImage(source) {
     try {
         let thisImage = null
         for (const img of imagesBuffer) {
@@ -79,7 +79,12 @@ function addBufferImage(source) {
             thisImage.dataset = { src: (window.location.href).href };
             thisImage.src = source
             imagesBuffer.push(thisImage)
+            await new Promise((resolve, reject) => {
+                thisImage.onload = resolve;
+                thisImage.onerror = reject;
+            });
         }
+
     } catch (e) { console.warn(e) }
 }
 
@@ -186,7 +191,7 @@ function ctext(ctx, text, x, y, font, align, color, outlineColor, outlineSize) {
     if (color) ctx.fillText(text, x, y)
 }
 
-function getDelta(timestamp){
+function getDelta(timestamp) {
     bulbasCanvasDelta = (timestamp - bulbasCanvasOldTimestamp)
     bulbasCanvasOldTimestamp = timestamp
     return bulbasCanvasDelta
